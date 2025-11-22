@@ -154,7 +154,13 @@ class AppModule {}
 // --- 6. Bootstrap (Start Server) ---
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.enableCors(); // Allow React frontend to access
+  app.enableCors({
+    origin: [
+      'http://localhost:5173', // Local development
+      'https://app-bank.mashaheir.com', // Production frontend
+    ],
+    credentials: true,
+  });
   await app.listen(3000);
   console.log(`Backend is running on: http://localhost:3000`);
 }

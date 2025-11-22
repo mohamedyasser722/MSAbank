@@ -15,6 +15,7 @@ A simple banking application with NestJS backend, React frontend, and MySQL data
 - **Frontend**: React with Vite
 - **Database**: MySQL 8.0
 - **Containerization**: Docker & Docker Compose
+- **Reverse Proxy**: Traefik (for production deployment)
 
 ## Prerequisites
 
@@ -60,4 +61,39 @@ docker-compose down -v
 ## Development
 
 The backend and frontend have hot-reload enabled through volume mounts, so changes to source files will automatically reload.
+
+## Production Deployment with Traefik
+
+This application is configured to work with Traefik reverse proxy. The docker-compose.yml includes:
+
+- **Frontend**: Accessible at `https://app-bank.mashaheir.com`
+- **Backend API**: Accessible at `https://api-bank.mashaheir.com`
+
+### Prerequisites for Traefik Deployment
+
+1. Ensure the `traefik-proxy` network exists:
+   ```bash
+   docker network create traefik-proxy
+   ```
+
+2. Make sure your Traefik container is running and configured with:
+   - ACME TLS certificate resolver (`myresolver`)
+   - Entrypoints: `web` (HTTP) and `websecure` (HTTPS)
+
+3. DNS records pointing to your VPS:
+   - `app-bank.mashaheir.com` → Your VPS IP
+   - `api-bank.mashaheir.com` → Your VPS IP
+
+### Deployment Steps
+
+1. On your VPS, navigate to the project directory
+2. Run: `docker-compose up -d --build`
+3. Traefik will automatically:
+   - Obtain SSL certificates via Let's Encrypt
+   - Route traffic to the appropriate services
+   - Handle HTTPS redirects
+
+### Local Development
+
+For local development without Traefik, you can still use the docker-compose.yml. The frontend will automatically detect the environment and use `http://localhost:3000` for the API.
 

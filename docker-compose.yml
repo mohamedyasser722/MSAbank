@@ -7,8 +7,6 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: bankdb
-    ports:
-      - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
@@ -20,8 +18,9 @@ services:
   backend:
     build: ./backend
     container_name: bank-backend
-    ports:
-      - "3000:3000"
+    networks:
+      - traefik-proxy
+      - default
     volumes:
       - ./backend/src:/app/src
     environment:
@@ -34,18 +33,38 @@ services:
       mysql:
         condition: service_healthy
     restart: on-failure
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`api-bank.mashaheir.com`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls.certresolver=myresolver"
+      - "traefik.http.services.backend.loadbalancer.server.port=3000"
+      - "traefik.http.routers.backend.service=backend"
 
   frontend:
     build: ./frontend
     container_name: bank-frontend
-    ports:
-      - "5173:5173"
+    networks:
+      - traefik-proxy
     volumes:
       - ./frontend/src:/app/src
     environment:
       - CHOKIDAR_USEPOLLING=true
+      - VITE_API_URL=https://api-bank.mashaheir.com
     depends_on:
       - backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`app-bank.mashaheir.com`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls.certresolver=myresolver"
+      - "traefik.http.services.frontend.loadbalancer.server.port=5173"
+      - "traefik.http.routers.frontend.service=frontend"
+
+networks:
+  traefik-proxy:
+    external: true
+    name: traefik-proxy
 
 volumes:
   mysql_data:

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Wallet, LogIn, UserPlus, ArrowUpCircle, ArrowDownCircle, LogOut } from 'lucide-react';
 
-const API_URL = 'http://localhost:3000';
+// Use environment variable in production, fallback to localhost for local development
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export default function App() {
   const [user, setUser] = useState(null);
