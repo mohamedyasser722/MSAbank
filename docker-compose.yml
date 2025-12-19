@@ -1,6 +1,8 @@
 version: '3.8'
 
 services:
+
+  # --- Your Database ---
   mysql:
     image: mysql:8.0
     container_name: bank-mysql
@@ -9,12 +11,15 @@ services:
       MYSQL_DATABASE: bankdb
     volumes:
       - mysql_data:/var/lib/mysql
+    networks:
+      - default
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+  # --- Your Backend ---
   backend:
     build: ./backend
     container_name: bank-backend
@@ -35,12 +40,13 @@ services:
     restart: on-failure
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`api-bank.mashaheir.com`)"
-      - "traefik.http.routers.backend.entrypoints=websecure"
-      - "traefik.http.routers.backend.tls.certresolver=myresolver"
-      - "traefik.http.services.backend.loadbalancer.server.port=3000"
-      - "traefik.http.routers.backend.service=backend"
+      - "traefik.docker.network=traefik-proxy"
+      - "traefik.http.routers.msabank-backend.rule=Host(`api-bank.mashaheir.com`)"
+      - "traefik.http.routers.msabank-backend.entrypoints=websecure"
+      - "traefik.http.routers.msabank-backend.tls.certresolver=myresolver"
+      - "traefik.http.services.msabank-backend.loadbalancer.server.port=3000"
 
+  # --- Your Frontend ---
   frontend:
     build: ./frontend
     container_name: bank-frontend
@@ -55,17 +61,15 @@ services:
       - backend
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`app-bank.mashaheir.com`)"
-      - "traefik.http.routers.frontend.entrypoints=websecure"
-      - "traefik.http.routers.frontend.tls.certresolver=myresolver"
-      - "traefik.http.services.frontend.loadbalancer.server.port=5173"
-      - "traefik.http.routers.frontend.service=frontend"
+      - "traefik.docker.network=traefik-proxy"
+      - "traefik.http.routers.msabank-frontend.rule=Host(`app-bank.mashaheir.com`)"
+      - "traefik.http.routers.msabank-frontend.entrypoints=websecure"
+      - "traefik.http.routers.msabank-frontend.tls.certresolver=myresolver"
+      - "traefik.http.services.msabank-frontend.loadbalancer.server.port=5173"
 
 networks:
   traefik-proxy:
     external: true
-    name: traefik-proxy
 
 volumes:
   mysql_data:
-
